@@ -1,0 +1,36 @@
+# Compiled output
+target/
+*.class
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+*.project
+*.classpath
+.settings/
+
+# Maven
+.mvn/wrapper/maven-wrapper.jar
+
+# Logs
+*.log
+logs/
+
+# Environment / secrets — NUNCA subir credenciales al repo
+*.env
+application.properties
+application-local.properties
+application-secret.properties
+application-*.properties
+
+# Database dumps / backups
+*.sql
+*.dump
+*.db
+*.sqlite
+*.sqlite3
+
+# OS
+.DS_Store
+Thumbs.db
