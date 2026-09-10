@@ -7,7 +7,7 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 
-/** Datos para crear o actualizar un producto (POST y PUT /api/v1/productos). */
+/** Datos para crear o actualizar un producto. */
 @Data
 public class ProductoRequest {
     @NotBlank

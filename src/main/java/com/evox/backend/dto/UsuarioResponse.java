@@ -5,7 +5,6 @@ import com.evox.backend.model.Usuario;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
-/** Datos de usuario que se devuelven al frontend (nunca incluye la password). */
 @Data
 @AllArgsConstructor
 public class UsuarioResponse {

@@ -6,10 +6,6 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-/**
- * Captura las excepciones lanzadas en toda la aplicacion y las convierte
- * en una respuesta JSON simple y consistente: {"codigo": ..., "mensaje": ...}
- */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -19,8 +15,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(ex.getStatus())
                 .body(new ErrorResponse(ex.getStatus().value(), ex.getMessage()));
     }
-
-    // Errores de validacion de los DTO (@NotBlank, @Email, etc.)
+    
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> manejarValidacion(MethodArgumentNotValidException ex) {
         String mensaje = ex.getBindingResult().getFieldErrors().stream()
