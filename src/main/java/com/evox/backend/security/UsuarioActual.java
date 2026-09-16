@@ -1,21 +1,21 @@
 package com.evox.backend.security;
 
-import com.evox.backend.model.Usuario;
-import com.evox.backend.service.UsuarioService;
+import com.evox.backend.model.Perfil;
+import com.evox.backend.service.PerfilService;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 @Component
 public class UsuarioActual {
 
-    private final UsuarioService usuarioService;
+    private final PerfilService perfilService;
 
-    public UsuarioActual(UsuarioService usuarioService) {
-        this.usuarioService = usuarioService;
+    public UsuarioActual(PerfilService perfilService) {
+        this.perfilService = perfilService;
     }
 
-    public Usuario obtener() {
+    public Perfil obtener() {
         String correo = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        return usuarioService.obtenerPorCorreo(correo);
+        return perfilService.obtenerPorCorreo(correo);
     }
 }

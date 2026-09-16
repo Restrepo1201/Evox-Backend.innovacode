@@ -4,15 +4,15 @@ import com.evox.backend.dto.CarritoResponse;
 import com.evox.backend.dto.ItemCarritoResponse;
 import com.evox.backend.exception.ApiException;
 import com.evox.backend.model.Carrito;
-import com.evox.backend.model.ItemCarrito;
+import com.evox.backend.model.Perfil;
 import com.evox.backend.model.Producto;
-import com.evox.backend.model.Usuario;
 import com.evox.backend.repository.CarritoRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class CarritoService {
@@ -25,73 +25,52 @@ public class CarritoService {
         this.productoService = productoService;
     }
 
-    /** Obtiene el carrito del usuario (todo cliente tiene uno, creado al registrarse). */
-    public Carrito obtenerCarritoDe(Usuario usuario) {
-        return carritoRepository.findByUsuarioId(usuario.getId())
-                .orElseGet(() -> {
-                    Carrito nuevo = new Carrito();
-                    nuevo.setUsuario(usuario);
-                    return carritoRepository.save(nuevo);
-                });
-    }
-
     /** GET /api/v1/carrito */
-    public CarritoResponse verCarrito(Usuario usuario) {
-        return construirRespuesta(obtenerCarritoDe(usuario));
+    public CarritoResponse verCarrito(Perfil usuario) {
+        return construirRespuesta(carritoRepository.findByUsuarioIdOrderByFechaDesc(usuario.getId()));
     }
 
     /** POST /api/v1/carrito/items */
-    public CarritoResponse agregarProducto(Usuario usuario, Long productoId, int cantidad) {
-        Carrito carrito = obtenerCarritoDe(usuario);
+    public CarritoResponse agregarProducto(Perfil usuario, UUID productoId, int cantidad) {
         Producto producto = productoService.buscarEntidad(productoId);
 
-        ItemCarrito item = carrito.getItems().stream()
-                .filter(i -> i.getProducto().getId().equals(productoId))
-                .findFirst()
+        Carrito fila = carritoRepository.findByUsuarioIdAndProductoId(usuario.getId(), productoId)
                 .orElse(null);
 
-        int cantidadFinal = (item != null ? item.getCantidad() : 0) + cantidad;
-        validarStock(producto, cantidadFinal);
-
-        if (item == null) {
-            item = new ItemCarrito();
-            item.setCarrito(carrito);
-            item.setProducto(producto);
-            item.setCantidad(cantidad);
-            carrito.getItems().add(item);
+        if (fila == null) {
+            fila = new Carrito();
+            fila.setUsuario(usuario);
+            fila.setProducto(producto);
+            fila.setCantidad(cantidad);
+            fila.setPrecioUnitario(producto.getPrecio());
         } else {
-            item.setCantidad(cantidadFinal);
+            fila.setCantidad(fila.getCantidad() + cantidad);
         }
 
-        carritoRepository.save(carrito);
-        return construirRespuesta(carrito);
+        validarStock(producto, fila.getCantidad());
+        carritoRepository.save(fila);
+
+        return construirRespuesta(carritoRepository.findByUsuarioIdOrderByFechaDesc(usuario.getId()));
     }
 
     /** PUT /api/v1/carrito/items/{productoId} */
-    public CarritoResponse actualizarCantidad(Usuario usuario, Long productoId, int cantidad) {
-        Carrito carrito = obtenerCarritoDe(usuario);
-        ItemCarrito item = buscarItem(carrito, productoId);
+    public CarritoResponse actualizarCantidad(Perfil usuario, UUID productoId, int cantidad) {
+        Carrito fila = carritoRepository.findByUsuarioIdAndProductoId(usuario.getId(), productoId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "El producto no esta en el carrito"));
 
-        validarStock(item.getProducto(), cantidad);
-        item.setCantidad(cantidad);
+        validarStock(fila.getProducto(), cantidad);
+        fila.setCantidad(cantidad);
+        carritoRepository.save(fila);
 
-        carritoRepository.save(carrito);
-        return construirRespuesta(carrito);
+        return construirRespuesta(carritoRepository.findByUsuarioIdOrderByFechaDesc(usuario.getId()));
     }
 
     /** DELETE /api/v1/carrito/items/{productoId} */
-    public void eliminarProducto(Usuario usuario, Long productoId) {
-        Carrito carrito = obtenerCarritoDe(usuario);
-        ItemCarrito item = buscarItem(carrito, productoId);
-        carrito.getItems().remove(item);
-        carritoRepository.save(carrito);
-    }
-
-    private ItemCarrito buscarItem(Carrito carrito, Long productoId) {
-        return carrito.getItems().stream()
-                .filter(i -> i.getProducto().getId().equals(productoId))
-                .findFirst()
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "El producto no esta en el carrito"));
+    public void eliminarProducto(Perfil usuario, UUID productoId) {
+        if (carritoRepository.findByUsuarioIdAndProductoId(usuario.getId(), productoId).isEmpty()) {
+            throw new ApiException(HttpStatus.NOT_FOUND, "El producto no esta en el carrito");
+        }
+        carritoRepository.deleteByUsuarioIdAndProductoId(usuario.getId(), productoId);
     }
 
     private void validarStock(Producto producto, int cantidadDeseada) {
@@ -100,14 +79,14 @@ public class CarritoService {
         }
     }
 
-    private CarritoResponse construirRespuesta(Carrito carrito) {
-        List<ItemCarritoResponse> items = carrito.getItems().stream()
-                .map(i -> new ItemCarritoResponse(
-                        i.getProducto().getId(),
-                        i.getProducto().getNombre(),
-                        i.getProducto().getPrecio(),
-                        i.getCantidad(),
-                        i.getProducto().getPrecio().multiply(BigDecimal.valueOf(i.getCantidad()))
+    private CarritoResponse construirRespuesta(List<Carrito> lineas) {
+        List<ItemCarritoResponse> items = lineas.stream()
+                .map(l -> new ItemCarritoResponse(
+                        l.getProducto().getId(),
+                        l.getProducto().getNombre(),
+                        l.getPrecioUnitario(),
+                        l.getCantidad(),
+                        l.getPrecioUnitario().multiply(BigDecimal.valueOf(l.getCantidad()))
                 ))
                 .toList();
 

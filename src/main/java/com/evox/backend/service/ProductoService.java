@@ -4,7 +4,9 @@ import com.evox.backend.dto.CatalogoResponse;
 import com.evox.backend.dto.ProductoRequest;
 import com.evox.backend.dto.ProductoResponse;
 import com.evox.backend.exception.ApiException;
+import com.evox.backend.model.Categoria;
 import com.evox.backend.model.Producto;
+import com.evox.backend.repository.CategoriaRepository;
 import com.evox.backend.repository.ProductoRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -12,14 +14,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class ProductoService {
 
     private final ProductoRepository productoRepository;
+    private final CategoriaRepository categoriaRepository;
 
-    public ProductoService(ProductoRepository productoRepository) {
+    public ProductoService(ProductoRepository productoRepository, CategoriaRepository categoriaRepository) {
         this.productoRepository = productoRepository;
+        this.categoriaRepository = categoriaRepository;
     }
 
     /** GET /api/v1/productos : catalogo con filtros opcionales y paginacion. */
@@ -33,10 +38,10 @@ public class ProductoService {
 
         Page<Producto> resultado;
         if (hayCategoria && hayBusqueda) {
-            resultado = productoRepository.findByCategoriaContainingIgnoreCaseAndNombreContainingIgnoreCase(
+            resultado = productoRepository.findByCategoria_NombreContainingIgnoreCaseAndNombreContainingIgnoreCase(
                     categoria, buscar, pageRequest);
         } else if (hayCategoria) {
-            resultado = productoRepository.findByCategoriaContainingIgnoreCase(categoria, pageRequest);
+            resultado = productoRepository.findByCategoria_NombreContainingIgnoreCase(categoria, pageRequest);
         } else if (hayBusqueda) {
             resultado = productoRepository.findByNombreContainingIgnoreCase(buscar, pageRequest);
         } else {
@@ -51,18 +56,18 @@ public class ProductoService {
     }
 
     /** GET /api/v1/productos/{id} */
-    public ProductoResponse obtenerPorId(Long id) {
+    public ProductoResponse obtenerPorId(UUID id) {
         return ProductoResponse.desde(buscarEntidad(id));
     }
 
     /** Metodo interno reutilizado por otros servicios (carrito, pedidos, comentarios). */
-    public Producto buscarEntidad(Long id) {
+    public Producto buscarEntidad(UUID id) {
         return productoRepository.findById(id)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Producto no encontrado"));
     }
 
     /** POST /api/v1/productos (solo ADMINISTRADOR) */
-    public Long crear(ProductoRequest datos) {
+    public UUID crear(ProductoRequest datos) {
         Producto producto = new Producto();
         copiarDatos(producto, datos);
         producto = productoRepository.save(producto);
@@ -70,14 +75,14 @@ public class ProductoService {
     }
 
     /** PUT /api/v1/productos/{id} (solo ADMINISTRADOR) */
-    public void actualizar(Long id, ProductoRequest datos) {
+    public void actualizar(UUID id, ProductoRequest datos) {
         Producto producto = buscarEntidad(id);
         copiarDatos(producto, datos);
         productoRepository.save(producto);
     }
 
     /** DELETE /api/v1/productos/{id} (solo ADMINISTRADOR) */
-    public void eliminar(Long id) {
+    public void eliminar(UUID id) {
         if (!productoRepository.existsById(id)) {
             throw new ApiException(HttpStatus.NOT_FOUND, "Producto no encontrado");
         }
@@ -90,6 +95,13 @@ public class ProductoService {
         producto.setPrecio(datos.getPrecio());
         producto.setStock(datos.getStock());
         producto.setImagen(datos.getImagen());
-        producto.setCategoria(datos.getCategoriaId());
+
+        if (datos.getCategoriaId() != null) {
+            Categoria categoria = categoriaRepository.findById(datos.getCategoriaId())
+                    .orElseThrow(() -> new ApiException(HttpStatus.BAD_REQUEST, "Categoria no encontrada"));
+            producto.setCategoria(categoria);
+        } else {
+            producto.setCategoria(null);
+        }
     }
 }

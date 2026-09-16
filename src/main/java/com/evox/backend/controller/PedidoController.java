@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 /** Endpoints de pedidos (requieren estar autenticado). */
 @RestController
@@ -38,7 +39,7 @@ public class PedidoController {
 
     // GET /api/v1/pedidos/{id}
     @GetMapping("/{id}")
-    public ResponseEntity<PedidoDetalleResponse> obtener(@PathVariable Long id) {
+    public ResponseEntity<PedidoDetalleResponse> obtener(@PathVariable UUID id) {
         return ResponseEntity.ok(pedidoService.obtenerDetalle(usuarioActual.obtener(), id));
     }
 }

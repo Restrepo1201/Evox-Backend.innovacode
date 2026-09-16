@@ -11,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 /** Endpoints del carrito de compras (requiere estar autenticado como cliente). */
 @RestController
 @RequestMapping("/api/v1/carrito")
@@ -41,7 +43,7 @@ public class CarritoController {
 
     // PUT /api/v1/carrito/items/{productoId}
     @PutMapping("/items/{productoId}")
-    public ResponseEntity<?> actualizarCantidad(@PathVariable Long productoId, @Valid @RequestBody CantidadRequest datos) {
+    public ResponseEntity<?> actualizarCantidad(@PathVariable UUID productoId, @Valid @RequestBody CantidadRequest datos) {
         CarritoResponse carrito = carritoService.actualizarCantidad(usuarioActual.obtener(), productoId, datos.getCantidad());
 
         // Se busca el subtotal del producto actualizado para incluirlo en la respuesta.
@@ -56,7 +58,7 @@ public class CarritoController {
 
     // DELETE /api/v1/carrito/items/{productoId}
     @DeleteMapping("/items/{productoId}")
-    public ResponseEntity<MensajeResponse> eliminar(@PathVariable Long productoId) {
+    public ResponseEntity<MensajeResponse> eliminar(@PathVariable UUID productoId) {
         carritoService.eliminarProducto(usuarioActual.obtener(), productoId);
         return ResponseEntity.ok(new MensajeResponse("Producto eliminado del carrito"));
     }

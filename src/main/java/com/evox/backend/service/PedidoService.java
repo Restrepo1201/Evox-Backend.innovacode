@@ -1,8 +1,18 @@
 package com.evox.backend.service;
 
-import com.evox.backend.dto.*;
+import com.evox.backend.dto.ItemPedidoResponse;
+import com.evox.backend.dto.PedidoCreadoResponse;
+import com.evox.backend.dto.PedidoDetalleResponse;
+import com.evox.backend.dto.PedidoRequest;
+import com.evox.backend.dto.PedidoResumenResponse;
 import com.evox.backend.exception.ApiException;
-import com.evox.backend.model.*;
+import com.evox.backend.model.Carrito;
+import com.evox.backend.model.EstadoPedido;
+import com.evox.backend.model.Pedido;
+import com.evox.backend.model.Perfil;
+import com.evox.backend.model.Producto;
+import com.evox.backend.model.Rol;
+import com.evox.backend.repository.CarritoRepository;
 import com.evox.backend.repository.PedidoRepository;
 import com.evox.backend.repository.ProductoRepository;
 import org.springframework.http.HttpStatus;
@@ -11,81 +21,75 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class PedidoService {
 
     private final PedidoRepository pedidoRepository;
     private final ProductoRepository productoRepository;
-    private final CarritoService carritoService;
+    private final CarritoRepository carritoRepository;
 
     public PedidoService(PedidoRepository pedidoRepository, ProductoRepository productoRepository,
-                          CarritoService carritoService) {
+                         CarritoRepository carritoRepository) {
         this.pedidoRepository = pedidoRepository;
         this.productoRepository = productoRepository;
-        this.carritoService = carritoService;
+        this.carritoRepository = carritoRepository;
     }
 
     /** POST /api/v1/pedidos : convierte el carrito actual del cliente en un pedido. */
     @Transactional
-    public PedidoCreadoResponse crearPedido(Usuario usuario, PedidoRequest datos) {
-        Carrito carrito = carritoService.obtenerCarritoDe(usuario);
+    public PedidoCreadoResponse crearPedido(Perfil usuario, PedidoRequest datos) {
+        List<Carrito> lineas = carritoRepository.findByUsuarioIdOrderByFechaDesc(usuario.getId());
 
-        if (carrito.getItems().isEmpty()) {
+        if (lineas.isEmpty()) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "El carrito esta vacio");
         }
 
         Pedido pedido = new Pedido();
         pedido.setUsuario(usuario);
-        pedido.setDireccionEntrega(datos.getDireccionEntrega());
-        pedido.setCiudad(datos.getCiudad());
-        pedido.setMetodoPago(datos.getMetodoPago());
         pedido.setEstado(EstadoPedido.PENDIENTE);
+        pedido.setNota(datos.getNota());
 
         BigDecimal total = BigDecimal.ZERO;
 
-        for (ItemCarrito itemCarrito : carrito.getItems()) {
-            Producto producto = itemCarrito.getProducto();
+        for (Carrito linea : lineas) {
+            Producto producto = linea.getProducto();
 
-            if (itemCarrito.getCantidad() > producto.getStock()) {
+            if (linea.getCantidad() > producto.getStock()) {
                 throw new ApiException(HttpStatus.CONFLICT,
                         "Stock insuficiente para " + producto.getNombre());
             }
 
             // Se descuenta el stock vendido.
-            producto.setStock(producto.getStock() - itemCarrito.getCantidad());
+            producto.setStock(producto.getStock() - linea.getCantidad());
             productoRepository.save(producto);
 
-            ItemPedido itemPedido = new ItemPedido();
-            itemPedido.setPedido(pedido);
-            itemPedido.setProducto(producto);
-            itemPedido.setNombreProducto(producto.getNombre());
-            itemPedido.setPrecioUnitario(producto.getPrecio());
-            itemPedido.setCantidad(itemCarrito.getCantidad());
-            pedido.getItems().add(itemPedido);
+            pedido.getItems().add(new Pedido.ItemPedidoJson(
+                    producto.getId(), producto.getNombre(), linea.getCantidad(), linea.getPrecioUnitario()));
 
-            total = total.add(producto.getPrecio().multiply(BigDecimal.valueOf(itemCarrito.getCantidad())));
+            total = total.add(linea.getPrecioUnitario().multiply(BigDecimal.valueOf(linea.getCantidad())));
         }
 
         pedido.setTotal(total);
         pedido = pedidoRepository.save(pedido);
 
         // El carrito queda vacio despues de comprar.
-        carrito.getItems().clear();
+        carritoRepository.deleteByUsuarioId(usuario.getId());
 
         return new PedidoCreadoResponse(pedido.getId(), pedido.getEstado(), pedido.getTotal(),
                 "Pedido creado correctamente");
     }
 
     /** GET /api/v1/pedidos */
-    public List<PedidoResumenResponse> listarDe(Usuario usuario) {
+    public List<PedidoResumenResponse> listarDe(Perfil usuario) {
         return pedidoRepository.findByUsuarioIdOrderByFechaDesc(usuario.getId()).stream()
                 .map(p -> new PedidoResumenResponse(p.getId(), p.getFecha(), p.getTotal(), p.getEstado()))
                 .toList();
     }
 
     /** GET /api/v1/pedidos/{id} : solo el dueno del pedido o un administrador pueden verlo. */
-    public PedidoDetalleResponse obtenerDetalle(Usuario usuario, Long pedidoId) {
+    public PedidoDetalleResponse obtenerDetalle(Perfil usuario, UUID pedidoId) {
         Pedido pedido = pedidoRepository.findById(pedidoId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Pedido no encontrado"));
 
@@ -97,8 +101,8 @@ public class PedidoService {
         }
 
         List<ItemPedidoResponse> items = pedido.getItems().stream()
-                .map(i -> new ItemPedidoResponse(i.getProducto().getId(), i.getNombreProducto(),
-                        i.getCantidad(), i.getPrecioUnitario()))
+                .map(i -> new ItemPedidoResponse(i.getProductoId(), i.getNombre(),
+                        i.getCantidad(), i.getPrecio()))
                 .toList();
 
         return new PedidoDetalleResponse(pedido.getId(), pedido.getEstado(), pedido.getTotal(), items);
