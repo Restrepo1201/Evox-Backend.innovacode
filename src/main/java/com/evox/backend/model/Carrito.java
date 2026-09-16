@@ -2,26 +2,46 @@ package com.evox.backend.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.UuidGenerator;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import java.util.UUID;
 
 /**
- * Carrito de compras de un cliente
+ * Una linea del carrito de compras: cada fila es un producto con su cantidad.
+ * Tabla: carritos
  */
 @Entity
-@Table(name = "carrito")
+@Table(name = "carritos")
 @Data
 public class Carrito {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @UuidGenerator
+    @Column(columnDefinition = "uuid")
+    private UUID id;
 
-    @OneToOne(optional = false)
-    @JoinColumn(name = "usuario_id", unique = true)
-    private Usuario usuario;
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "usuario_id")
+    private Perfil usuario;
 
-    @OneToMany(mappedBy = "carrito", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ItemCarrito> items = new ArrayList<>();
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "producto_id")
+    private Producto producto;
+
+    @Column(nullable = false)
+    private Integer cantidad = 1;
+
+    @Column(name = "precio_unitario", nullable = false, precision = 12, scale = 2)
+    private BigDecimal precioUnitario = BigDecimal.ZERO;
+
+    private OffsetDateTime fecha;
+
+    @PrePersist
+    void prePersist() {
+        if (fecha == null) {
+            fecha = OffsetDateTime.now();
+        }
+    }
 }

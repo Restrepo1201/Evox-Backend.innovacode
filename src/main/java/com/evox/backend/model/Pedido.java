@@ -1,42 +1,38 @@
 package com.evox.backend.model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.UuidGenerator;
+import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
- * Un pedido generado a partir del carrito de un cliente.
- * Tabla: pedido
+ * Un pedido confirmado. Los items se guardan como JSON en la columna items.
+ * Tabla: pedidos
  */
 @Entity
-@Table(name = "pedido")
+@Table(name = "pedidos")
 @Data
 public class Pedido {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @UuidGenerator
+    @Column(columnDefinition = "uuid")
+    private UUID id;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "usuario_id")
-    private Usuario usuario;
+    private Perfil usuario;
 
-    @Column(nullable = false)
-    private LocalDate fecha = LocalDate.now();
-
-    @Column(nullable = false)
-    private String direccionEntrega;
-
-    @Column(nullable = false)
-    private String ciudad;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 30)
-    private MetodoPago metodoPago;
+    private OffsetDateTime fecha;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -45,6 +41,34 @@ public class Pedido {
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal total;
 
-    @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ItemPedido> items = new ArrayList<>();
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(nullable = false, columnDefinition = "jsonb")
+    private List<ItemPedidoJson> items = new ArrayList<>();
+
+    private String nota;
+
+    @Column(name = "fecha_actualizacion")
+    private OffsetDateTime fechaActualizacion;
+
+    @PrePersist
+    void prePersist() {
+        OffsetDateTime ahora = OffsetDateTime.now();
+        if (fecha == null) {
+            fecha = ahora;
+        }
+        if (fechaActualizacion == null) {
+            fechaActualizacion = ahora;
+        }
+    }
+
+    /** Item de pedido tal como se guarda dentro del JSONB de la columna items. */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ItemPedidoJson {
+        private UUID productoId;
+        private String nombre;
+        private Integer cantidad;
+        private BigDecimal precio;
+    }
 }
