@@ -4,39 +4,30 @@ import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.UuidGenerator;
 
-import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
 /**
- * Un producto electronico del catalogo. Tabla: productos
+ * Categoria del catalogo. Tabla: categorias
  */
 @Entity
-@Table(name = "productos")
+@Table(name = "categorias")
 @Data
-public class Producto {
+public class Categoria {
 
     @Id
     @UuidGenerator
     @Column(columnDefinition = "uuid")
     private UUID id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String nombre;
 
     private String descripcion;
 
-    @Column(nullable = false, precision = 12, scale = 2)
-    private BigDecimal precio;
+    private Integer orden = 0;
 
-    @Column(nullable = false)
-    private Integer stock = 0;
-
-    private String imagen;
-
-    @ManyToOne
-    @JoinColumn(name = "categoria_id")
-    private Categoria categoria;
+    private Boolean activo = true;
 
     @Column(name = "fecha_creacion")
     private OffsetDateTime fechaCreacion;

@@ -5,11 +5,12 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Data
 @AllArgsConstructor
 public class PedidoCreadoResponse {
-    private Long id;
+    private UUID id;
     private EstadoPedido estado;
     private BigDecimal total;
     private String mensaje;

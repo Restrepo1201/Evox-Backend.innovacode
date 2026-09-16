@@ -10,6 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 /** Endpoints del catalogo de productos (publicos para consultar, ADMIN para modificar). */
 @RestController
 @RequestMapping("/api/v1/productos")
@@ -33,7 +35,7 @@ public class ProductoController {
 
     // GET /api/v1/productos/{id}
     @GetMapping("/{id}")
-    public ResponseEntity<ProductoResponse> obtener(@PathVariable Long id) {
+    public ResponseEntity<ProductoResponse> obtener(@PathVariable UUID id) {
         return ResponseEntity.ok(productoService.obtenerPorId(id));
     }
 
@@ -47,14 +49,14 @@ public class ProductoController {
 
     // PUT /api/v1/productos/{id} (ADMINISTRADOR)
     @PutMapping("/{id}")
-    public ResponseEntity<MensajeResponse> actualizar(@PathVariable Long id, @Valid @RequestBody ProductoRequest datos) {
+    public ResponseEntity<MensajeResponse> actualizar(@PathVariable UUID id, @Valid @RequestBody ProductoRequest datos) {
         productoService.actualizar(id, datos);
         return ResponseEntity.ok(new MensajeResponse("Producto actualizado correctamente"));
     }
 
     // DELETE /api/v1/productos/{id} (ADMINISTRADOR)
     @DeleteMapping("/{id}")
-    public ResponseEntity<MensajeResponse> eliminar(@PathVariable Long id) {
+    public ResponseEntity<MensajeResponse> eliminar(@PathVariable UUID id) {
         productoService.eliminar(id);
         return ResponseEntity.ok(new MensajeResponse("Producto eliminado correctamente"));
     }

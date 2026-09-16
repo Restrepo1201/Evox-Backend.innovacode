@@ -5,14 +5,15 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.util.UUID;
 
 /** Una fila del historial de pedidos: GET /api/v1/pedidos */
 @Data
 @AllArgsConstructor
 public class PedidoResumenResponse {
-    private Long id;
-    private LocalDate fecha;
+    private UUID id;
+    private OffsetDateTime fecha;
     private BigDecimal total;
     private EstadoPedido estado;
 }

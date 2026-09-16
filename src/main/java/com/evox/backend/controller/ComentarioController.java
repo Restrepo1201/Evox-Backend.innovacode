@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 /** Endpoints de comentarios y calificaciones de productos. */
 @RestController
@@ -26,7 +27,7 @@ public class ComentarioController {
 
     // POST /api/v1/productos/{productoId}/comentarios (requiere estar autenticado)
     @PostMapping
-    public ResponseEntity<ComentarioResponse> crear(@PathVariable Long productoId,
+    public ResponseEntity<ComentarioResponse> crear(@PathVariable UUID productoId,
                                                       @Valid @RequestBody ComentarioRequest datos) {
         ComentarioResponse creado = comentarioService.crear(usuarioActual.obtener(), productoId, datos);
         return ResponseEntity.status(HttpStatus.CREATED).body(creado);
@@ -34,7 +35,7 @@ public class ComentarioController {
 
     // GET /api/v1/productos/{productoId}/comentarios (publico)
     @GetMapping
-    public ResponseEntity<List<ComentarioResponse>> listar(@PathVariable Long productoId) {
+    public ResponseEntity<List<ComentarioResponse>> listar(@PathVariable UUID productoId) {
         return ResponseEntity.ok(comentarioService.listarDeProducto(productoId));
     }
 }

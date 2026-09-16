@@ -6,6 +6,7 @@ import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 /** Datos para crear o actualizar un producto. */
 @Data
@@ -25,7 +26,5 @@ public class ProductoRequest {
 
     private String imagen;
 
-    // El contrato de API usa "categoriaId", aqui lo guardamos directamente
-    // como el nombre/texto de la categoria para simplificar el modelo.
-    private String categoriaId;
+    private UUID categoriaId;
 }
