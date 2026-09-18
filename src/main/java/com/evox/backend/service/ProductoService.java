@@ -95,6 +95,9 @@ public class ProductoService {
         producto.setPrecio(datos.getPrecio());
         producto.setStock(datos.getStock());
         producto.setImagen(datos.getImagen());
+        producto.setVideo(datos.getVideo());
+        producto.setVideoDuration(datos.getVideoDuration());
+        producto.setVideoStartTime(datos.getVideoStartTime());
 
         if (datos.getCategoriaId() != null) {
             Categoria categoria = categoriaRepository.findById(datos.getCategoriaId())

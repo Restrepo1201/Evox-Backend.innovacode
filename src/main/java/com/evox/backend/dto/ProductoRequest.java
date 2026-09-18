@@ -26,5 +26,11 @@ public class ProductoRequest {
 
     private String imagen;
 
+    private String video;
+
+    private Integer videoDuration;
+
+    private Integer videoStartTime;
+
     private UUID categoriaId;
 }
