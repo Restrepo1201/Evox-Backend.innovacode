@@ -44,14 +44,18 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Rutas publicas
+                        // Rutas públicas
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/productos/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/categorias/**").permitAll()
 
                         // Solo administradores pueden crear/editar/eliminar productos
                         .requestMatchers(HttpMethod.POST, "/api/v1/productos").hasRole("ADMINISTRADOR")
                         .requestMatchers(HttpMethod.PUT, "/api/v1/productos/**").hasRole("ADMINISTRADOR")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/productos/**").hasRole("ADMINISTRADOR")
+
+                        // Solo administradores pueden consultar la lista de usuarios
+                        .requestMatchers(HttpMethod.GET, "/api/v1/perfiles").hasRole("ADMINISTRADOR")
 
                         // Todo lo demas requiere estar autenticado (carrito, pedidos, comentarios)
                         .anyRequest().authenticated()
