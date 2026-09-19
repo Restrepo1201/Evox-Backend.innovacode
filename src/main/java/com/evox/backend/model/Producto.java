@@ -34,6 +34,12 @@ public class Producto {
 
     private String imagen;
 
+    private String video;
+
+    private Integer videoDuration;
+
+    private Integer videoStartTime;
+
     @ManyToOne
     @JoinColumn(name = "categoria_id")
     private Categoria categoria;

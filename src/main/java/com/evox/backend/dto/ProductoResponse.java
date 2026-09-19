@@ -17,11 +17,15 @@ public class ProductoResponse {
     private BigDecimal precio;
     private Integer stock;
     private String imagen;
+    private String video;
+    private Integer videoDuration;
+    private Integer videoStartTime;
     private String categoria;
 
     public static ProductoResponse desde(Producto p) {
         String categoria = p.getCategoria() != null ? p.getCategoria().getNombre() : null;
         return new ProductoResponse(p.getId(), p.getNombre(), p.getDescripcion(),
-                p.getPrecio(), p.getStock(), p.getImagen(), categoria);
+                p.getPrecio(), p.getStock(), p.getImagen(),
+                p.getVideo(), p.getVideoDuration(), p.getVideoStartTime(), categoria);
     }
 }

@@ -3,14 +3,18 @@ package com.evox.backend.service;
 import com.evox.backend.dto.LoginRequest;
 import com.evox.backend.dto.LoginResponse;
 import com.evox.backend.dto.RegisterRequest;
+import com.evox.backend.dto.UsuarioAdminResponse;
 import com.evox.backend.exception.ApiException;
 import com.evox.backend.model.Perfil;
 import com.evox.backend.model.Rol;
 import com.evox.backend.repository.PerfilRepository;
 import com.evox.backend.security.JwtUtil;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class PerfilService {
@@ -58,5 +62,12 @@ public class PerfilService {
     public Perfil obtenerPorCorreo(String correo) {
         return perfilRepository.findByCorreo(correo)
                 .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Usuario no encontrado"));
+    }
+
+    /** GET /api/v1/perfiles : lista todos los usuarios (solo ADMINISTRADOR). */
+    public List<UsuarioAdminResponse> listarUsuarios() {
+        return perfilRepository.findAll(Sort.by(Sort.Direction.DESC, "fechaCreacion")).stream()
+                .map(UsuarioAdminResponse::desde)
+                .toList();
     }
 }
