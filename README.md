@@ -5,6 +5,9 @@ Backend en **Spring Boot 3 + Java 17 + PostgreSQL (Supabase)**, construido sigui
 - El **diagrama entidad-relación** (perfil, producto, comentario/calificación, carrito, pedidos).
 - El **diagrama de casos de uso** (roles: cliente y administrador).
 
+> 👉 **¿Eres tester y quieres montar el proyecto en local (backend + frontend)?**
+> Sigue el **`docs/MANUAL_TESTER.md`** paso a paso (macOS y Windows).
+
 El código está organizado en capas simples, fáciles de seguir:
 
 ```
@@ -87,7 +90,11 @@ Los `id` son `UUID` generados por la aplicación (`@UuidGenerator`), así que el
 ```bash
 mvn spring-boot:run
 ```
-El servidor queda disponible en `http://localhost:8080`.
+
+
+> **Nota para testers:** si necesitas montar todo el stack en local (backend + frontend),
+> sigue la guía completa en **`docs/MANUAL_TESTER.md`** (incluye comandos para macOS y
+> Windows, solución de problemas y checklist).
 
 ## 5. Cómo probar rápido (con Postman o curl)
 
