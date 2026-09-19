@@ -61,6 +61,13 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- Carga del archivo .env (secretos locales) -->
+        <dependency>
+            <groupId>me.paulschwarz</groupId>
+            <artifactId>spring-dotenv</artifactId>
+            <version>4.0.0</version>
+        </dependency>
+
         <!-- JWT (JSON Web Token) para el login -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
